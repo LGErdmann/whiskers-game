@@ -13,3 +13,6 @@ streamlit run aplicacao.py
   use the square handle to resize and the round handle to rotate (Shift snaps 15°).
 - Keyboard: arrows nudge, Delete removes, Ctrl+D duplicates, Esc deselects.
 - Each map's arrangement is saved in the browser (localStorage).
+
+
+-https://whiskers-game.streamlit.app/
