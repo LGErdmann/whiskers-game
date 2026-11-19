@@ -1,4 +1,4 @@
-# Where's Whiskers — o que mudou
+# Where's Whiskers: o que mudou
 
 O app deixou de ser um quadro individual para montar cenas e virou um jogo em turma, com sala, turnos, pontos dados pelo professor, fases e pódio no final.
 
@@ -19,12 +19,12 @@ A mudança principal: antes cada pessoa brincava sozinha no próprio navegador; 
 | Fases | Não existiam | Professor define de 1 a 20 fases; entre elas monta um cenário novo |
 | Final | Não existia | Pódio animado com 1º, 2º e 3º lugar para todos |
 | Onde a cena fica salva | Navegador (localStorage) | Rascunho do professor no navegador; cena publicada, jogadores e pontos no servidor |
-| Visual | Título, quadro e lista de preposições | Estilo de jogo de quiz: cores fortes, PIN grande, botões coloridos de pontuação, sem emojis |
+| Visual | Título, quadro e lista de preposições | Estilo de jogo de quiz: cores fortes, PIN grande, botões coloridos de pontuação, telas enxutas, sem emojis e sem travessões |
 | Lista de preposições | Menu lateral | Continua: menu lateral do professor e seção recolhível para o aluno |
 
 ## Como o jogo funciona agora
 
-1. O professor entra com a senha e o app cria uma sala com PIN, QR code e link.
+1. O professor entra com a senha e clica em **Gerar sala**. No lugar do login aparecem o PIN, o QR code e, embaixo, o link da sala. **Abrir painel da sala** leva ao jogo.
 2. Os alunos já podem entrar antes do início: leem o QR code (ou digitam o PIN) e colocam o nome. Os nomes aparecem na sala de espera, na tela do professor. Nome repetido vira "Ana 2".
 3. O professor escolhe quantas fases o jogo terá, monta o cenário da fase 1 e clica em **Publicar para a turma**.
 4. Ao clicar em **Começar jogo**, começa a fase 1. O professor escreve a instrução (ex.: *Put Whiskers under the bed*) e o aluno da vez arrasta o gato e clica em **Enviar resposta**. Os outros veem de quem é a vez e a resposta enviada.
@@ -40,93 +40,105 @@ Os prints abaixo são de uma partida real de teste, com 3 alunos fictícios (Ana
 
 ### 1. Página inicial
 
-A primeira tela agora separa os dois papéis: à esquerda o aluno entra com PIN e nome, à direita o professor entra com a senha e o app cria a sala. O aviso embaixo lembra de trocar a senha padrão.
+A primeira tela agora separa os dois papéis: à esquerda o aluno entra com PIN e nome, à direita o professor entra com a senha. O aviso embaixo lembra de trocar a senha padrão.
 
 ![Página inicial](prints/01_pagina_inicial.png)
 
-### 2. Aluno entrando pelo QR code
+### 2. Professor logado
+
+Depois do login, o professor clica em **Gerar sala**.
+
+![Professor logado](prints/02_professor_logado.png)
+
+### 3. Sala gerada: QR code e link
+
+No lugar do login aparece o PIN, o QR code e, embaixo, o link da sala (`https://whiskers-game.streamlit.app/?sala=PIN`). Os alunos leem o QR code ou abrem o link. O professor clica em **Abrir painel da sala** para conduzir o jogo.
+
+![Sala gerada com QR code e link](prints/03_professor_sala_gerada.png)
+
+### 4. Aluno entrando pelo QR code
 
 Quem lê o QR code cai direto nesta tela, com o PIN já vindo do link. O aluno só digita o nome.
 
-![Aluno entrando](prints/02_aluno_entrando.png)
+![Aluno entrando](prints/04_aluno_entrando.png)
 
-### 3. Aluno esperando o início (celular)
+### 5. Aluno esperando o início (celular)
 
-O aluno entra antes de o jogo começar e fica aguardando. A tela confirma o nome, diz quantas fases o jogo terá e já mostra o placar.
+O aluno entra antes de o jogo começar e fica aguardando. A tela confirma o nome e já mostra o placar.
 
-<img src="prints/03_aluno_esperando_celular.png" alt="Aluno esperando no celular" width="320">
+<img src="prints/05_aluno_esperando_celular.png" alt="Aluno esperando no celular" width="320">
 
-### 4. Professor monta o cenário
+### 6. Professor monta o cenário
 
 A aba **Montar cena** é o quadro antigo, agora só do professor. Ele arrasta móveis e objetos, sem o gato, e clica em **Publicar para a turma**.
 
-![Professor monta o cenário](prints/04_professor_monta_cenario.png)
+![Professor monta o cenário](prints/06_professor_monta_cenario.png)
 
-### 5. Sala de espera do professor
+### 7. Sala de espera do professor
 
-Tela para projetar na sala: QR code grande, PIN, quantidade de alunos e o nome de cada um que entrou. O professor escolhe o número de fases, confere o cenário da fase 1 e clica em **Começar jogo**.
+Tela para projetar na sala: PIN, QR code grande com o link embaixo, quantidade de alunos e o nome de cada um que entrou. O professor escolhe o número de fases e clica em **Começar jogo**. Ações menos usadas (mudar a instrução, escolher quem joga, remover aluno, encerrar) ficam em **Mais opções**, nesta e nas outras telas do professor.
 
-![Sala de espera do professor](prints/05_professor_sala_de_espera.png)
+![Sala de espera do professor](prints/07_professor_sala_de_espera.png)
 
-### 6. A vez do aluno
+### 8. A vez do aluno
 
 Só o aluno da vez vê o quadro interativo. Os móveis ficam travados, apenas o gato se move (Front, Back e Flip ajudam em "behind" ou "in front of"). Ele posiciona e clica em **Enviar resposta**.
 
-![Aluno na sua vez](prints/06_aluno_sua_vez.png)
+![Aluno na sua vez](prints/08_aluno_sua_vez.png)
 
-### 7. O que os outros alunos veem
+### 9. O que os outros alunos veem
 
 Quem não está na vez acompanha: a fase, a instrução, quem respondeu e onde o gato foi colocado.
 
-![Outros alunos acompanhando](prints/07_outros_alunos_veem.png)
+![Outros alunos acompanhando](prints/09_outros_alunos_veem.png)
 
-### 8. Professor avalia a resposta
+### 10. Professor avalia a resposta
 
 O professor vê a cena com o gato onde o aluno deixou e escolhe a pontuação nos botões coloridos: 0, 25, 50 ou 100. Os botões só liberam depois que a resposta chega.
 
-![Professor avalia](prints/08_professor_avalia.png)
+![Professor avalia](prints/10_professor_avalia.png)
 
-### 9. A vez no celular
+### 11. A vez no celular
 
 No celular o quadro se ajusta à largura da tela e o gato é arrastado com o dedo.
 
-<img src="prints/09_aluno_vez_celular.png" alt="Aluno jogando no celular" width="320">
+<img src="prints/11_aluno_vez_celular.png" alt="Aluno jogando no celular" width="320">
 
-### 10. Fim da fase (professor)
+### 12. Fim da fase (professor)
 
-Depois do último aluno a fase termina. O placar mostra quem subiu (▲) e quem desceu (▼), e o botão **Começar fase 2** fica bloqueado até o professor publicar um cenário novo.
+Depois do último aluno a fase termina. O placar mostra quem subiu (▲) e quem desceu (▼), e o botão **Começar fase 2** fica bloqueado até o professor publicar um cenário novo na aba **Montar cena**.
 
-![Professor no fim da fase](prints/10_professor_fim_da_fase.png)
+![Professor no fim da fase](prints/12_professor_fim_da_fase.png)
 
-### 11. Fim da fase (aluno)
+### 13. Fim da fase (aluno)
 
 Enquanto o professor prepara a próxima fase, o aluno vê em que lugar está.
 
-![Aluno no fim da fase](prints/11_aluno_fim_da_fase.png)
+![Aluno no fim da fase](prints/13_aluno_fim_da_fase.png)
 
-### 12. Cenário novo publicado
+### 14. Cenário novo publicado
 
 Com o cenário da fase 2 publicado (aqui, a sala de estar), o botão libera e o professor confere a prévia antes de começar.
 
-![Cenário novo publicado](prints/12_professor_cenario_novo.png)
+![Cenário novo publicado](prints/14_professor_cenario_novo.png)
 
-### 13. Placar mudando
+### 15. Placar mudando
 
 Na fase 2, Ana errou (0) e Bruno acertou (100). O placar reordena sozinho: Bruno subiu duas posições e ganhou o selo +100.
 
-![Placar mudando](prints/13_placar_mudando.png)
+![Placar mudando](prints/15_placar_mudando.png)
 
-### 14. Pódio (professor)
+### 16. Pódio (professor)
 
 No fim da última fase o pódio aparece sozinho, com os blocos subindo do 3º ao 1º. **Nova partida** zera os pontos e volta para a sala de espera.
 
-![Pódio do professor](prints/14_professor_podio.png)
+![Pódio do professor](prints/16_professor_podio.png)
 
-### 15. Pódio (aluno no celular)
+### 17. Pódio (aluno no celular)
 
 Cada aluno vê o mesmo pódio e, logo abaixo, a própria posição e pontuação.
 
-<img src="prints/15_aluno_podio_celular.png" alt="Pódio no celular" width="320">
+<img src="prints/17_aluno_podio_celular.png" alt="Pódio no celular" width="320">
 
 ## Acesso e login
 
@@ -137,7 +149,7 @@ Só o professor tem senha; os alunos entram com o PIN da sala e o nome.
 | Professor | Página inicial, opção *Sou professor* | Senha padrão `professor`, ou a definida em `TEACHER_PASSWORD` nos secrets do Streamlit Cloud |
 | Aluno | QR code, link `https://whiskers-game.streamlit.app/?sala=PIN` ou página inicial, opção *Sou aluno* | Sem senha: PIN da sala + nome |
 
-Ao entrar, o professor recebe um link pessoal (menu lateral, *Seu link de professor*) para voltar à mesma sala; ele não deve ser passado aos alunos. Para rodar localmente: `pip install -r requirements.txt` e `streamlit run aplicacao.py`, abrindo pelo endereço de rede (ex.: `http://192.168.x.x:8501`) para o QR code funcionar nos celulares da mesma rede Wi-Fi.
+No painel da sala, o professor tem um link pessoal (menu lateral, *Seu link de professor*) para voltar à mesma sala; ele não deve ser passado aos alunos. O QR code e o link dos alunos sempre apontam para `https://whiskers-game.streamlit.app`; outro endereço pode ser definido em `APP_URL` nos secrets. Para rodar localmente: `pip install -r requirements.txt` e `streamlit run aplicacao.py`.
 
 ## Arquivos alterados
 

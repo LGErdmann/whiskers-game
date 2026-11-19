@@ -1,11 +1,3 @@
-"""
-Estado compartilhado das salas de jogo.
-
-Todas as sessões do Streamlit rodam no mesmo processo, então um objeto
-guardado com st.cache_resource é visto por professor e alunos ao mesmo
-tempo. As salas ficam em memória: se o app reiniciar, elas somem.
-"""
-
 import copy
 import random
 import secrets
@@ -49,7 +41,6 @@ def _limpar_antigas(store):
 
 
 def _ranking(sala):
-    """Lista de ids ordenada por pontos (empate: quem entrou primeiro)."""
     return sorted(
         sala["ordem"],
         key=lambda pid: (-sala["jogadores"][pid]["pontos"], sala["ordem"].index(pid)),
@@ -60,12 +51,7 @@ def ranking(sala):
     return _ranking(sala)
 
 
-# ------------------------------------------------------------
-# Leitura
-# ------------------------------------------------------------
-
 def obter(codigo):
-    """Cópia da sala (ou None) para desenhar a tela sem segurar o lock."""
     if not codigo:
         return None
     store = _store()
@@ -79,10 +65,6 @@ def professor_valido(codigo, token):
     return bool(sala and token and secrets.compare_digest(sala["token_prof"], token))
 
 
-# ------------------------------------------------------------
-# Professor
-# ------------------------------------------------------------
-
 def criar_sala():
     store = _store()
     with store.lock:
@@ -93,19 +75,19 @@ def criar_sala():
             "codigo": codigo,
             "token_prof": token,
             "criada": time.time(),
-            "status": "lobby",          # lobby -> jogando -> intervalo -> jogando ... -> fim
+            "status": "lobby",
             "fases_total": FASES_PADRAO,
-            "fase": 0,                  # fase atual (0 = ainda não começou)
-            "jogaram": [],              # pids que já tiveram a vez nesta fase
-            "cena_rev_fase": 0,         # rev da cena usada na fase atual
-            "cena": None,               # {"room", "items", "rev"}
+            "fase": 0,
+            "jogaram": [],
+            "cena_rev_fase": 0,
+            "cena": None,
             "prompt": PROMPT_PADRAO,
-            "jogadores": {},            # pid -> {"nome", "pontos", "historico"}
-            "ordem": [],                # pids na ordem de entrada
-            "vez": None,                # {"pid", "id"}
-            "resposta": None,           # {"pid", "vez_id", "cat"}
-            "ultimo": None,             # {"pid", "nome", "pontos", "vez_id"}
-            "rank_antes": {},           # pid -> posição antes da última pontuação
+            "jogadores": {},
+            "ordem": [],
+            "vez": None,
+            "resposta": None,
+            "ultimo": None,
+            "rank_antes": {},
             "contador_vez": 0,
             "rodada_fim": 0,
         }
@@ -126,9 +108,7 @@ def publicar_cena(codigo, cena):
         rev = (sala["cena"] or {}).get("rev", 0) + 1
         sala["cena"] = {"room": cena["room"], "items": cena["items"], "rev": rev}
         if sala["status"] == "jogando":
-            # Ajuste no meio da fase continua sendo o cenário desta fase
             sala["cena_rev_fase"] = rev
-        # Uma cena nova invalida a resposta que estava em avaliação
         sala["resposta"] = None
         return True
     return _mutar(codigo, fn)
@@ -150,7 +130,6 @@ def _dar_vez(sala, pid):
 
 
 def faltam(sala):
-    """Alunos que ainda não jogaram nesta fase, na ordem de entrada."""
     return [pid for pid in sala["ordem"] if pid not in sala["jogaram"]]
 
 
@@ -162,7 +141,6 @@ def _fim(sala):
 
 
 def _proximo(sala):
-    """Passa a vez para o próximo que não jogou. Se todos jogaram, a fase acaba."""
     restantes = faltam(sala)
     if restantes:
         _dar_vez(sala, restantes[0])
@@ -170,7 +148,7 @@ def _proximo(sala):
     sala["vez"] = None
     sala["resposta"] = None
     if not sala["ordem"]:
-        return  # sala vazia: espera alguém entrar
+        return
     if sala["fase"] >= sala["fases_total"]:
         _fim(sala)
     else:
@@ -201,7 +179,6 @@ def dar_vez(codigo, pid):
 
 
 def pular(codigo):
-    """O aluno da vez perde a vez nesta fase (sem pontos)."""
     def fn(sala):
         vez = sala["vez"]
         if sala["status"] != "jogando" or not vez:
@@ -213,18 +190,16 @@ def pular(codigo):
 
 
 def comecar(codigo):
-    """Começa a fase 1 (do lobby) ou a próxima fase (do intervalo)."""
     def fn(sala):
         if not sala["cena"] or sala["status"] not in ("lobby", "intervalo"):
             return
         if sala["status"] == "intervalo" and sala["cena"]["rev"] == sala["cena_rev_fase"]:
-            return  # precisa publicar um cenário novo
+            return
         _iniciar_fase(sala)
     return _mutar(codigo, fn)
 
 
 def pontuar(codigo, pontos):
-    """Dá os pontos para o aluno da vez e passa para o próximo."""
     def fn(sala):
         vez = sala["vez"]
         if not vez or vez["pid"] not in sala["jogadores"] or pontos not in PONTOS:
@@ -282,10 +257,6 @@ def jogar_de_novo(codigo):
     return _mutar(codigo, fn)
 
 
-# ------------------------------------------------------------
-# Aluno
-# ------------------------------------------------------------
-
 def entrar(codigo, nome):
     nome = " ".join((nome or "").split())[:MAX_NOME]
     if not nome:
@@ -300,7 +271,6 @@ def entrar(codigo, nome):
         pid = secrets.token_urlsafe(8)
         sala["jogadores"][pid] = {"nome": final, "pontos": 0, "historico": []}
         sala["ordem"].append(pid)
-        # Quem entra no meio da fase joga nela também; se a sala estava vazia, já é a vez dele
         if sala["status"] == "jogando" and sala["vez"] is None:
             _proximo(sala)
         return pid

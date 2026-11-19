@@ -16,7 +16,6 @@
     line-height: 1.2;
 }
 
-/* ---------- vocabulário ---------- */
 .vocab-card {
     background-color: #fffbe6;
     border: 1px solid #ffe58f;
@@ -38,7 +37,6 @@
     margin-bottom: 0;
 }
 
-/* ---------- cabeçalhos ---------- */
 .hero {
     background: linear-gradient(135deg, var(--roxo), var(--roxo-claro));
     color: #fff;
@@ -107,6 +105,12 @@
     text-align: center;
     font-size: 1.05rem;
     margin: 6px 0 12px;
+    word-break: break-all;
+}
+
+.join-url a {
+    color: var(--roxo);
+    font-weight: 700;
 }
 
 .count {
@@ -153,7 +157,6 @@
     animation: pop 0.5s ease-out;
 }
 
-/* ---------- fases ---------- */
 .fase {
     display: flex;
     align-items: center;
@@ -174,28 +177,6 @@
     font-size: 1.1rem;
 }
 
-.dots {
-    display: flex;
-    gap: 6px;
-}
-
-.dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: #d9cdee;
-}
-
-.dot.done {
-    background: var(--verde);
-}
-
-.dot.now {
-    background: var(--roxo);
-    box-shadow: 0 0 0 3px rgba(70, 23, 143, 0.25);
-}
-
-/* ---------- jogo ---------- */
 .prompt {
     background: var(--roxo);
     color: #fff;
@@ -244,14 +225,6 @@
 .result.r50 { background: var(--azul); }
 .result.r100 { background: var(--verde); }
 
-.score-label {
-    font-family: Montserrat, sans-serif;
-    font-weight: 800;
-    text-align: center;
-    margin: 10px 0 6px;
-}
-
-/* Botões coloridos de pontuação */
 .st-key-pontos button {
     min-height: 64px;
     border: none !important;
@@ -274,7 +247,6 @@
 .st-key-pts_50 button { background: var(--azul) !important; }
 .st-key-pts_100 button { background: var(--verde) !important; }
 
-/* ---------- placar ---------- */
 .lb {
     background: var(--roxo);
     color: #fff;
@@ -359,7 +331,6 @@
     animation: pop 0.5s ease-out;
 }
 
-/* ---------- pódio ---------- */
 .podium-title {
     text-align: center;
     font-family: Montserrat, sans-serif;
@@ -420,7 +391,6 @@
     animation: fadein 0.5s ease-out both;
 }
 
-/* Sobe o 3º, depois o 2º e por fim o campeão */
 .p3 .block { height: 110px; background: #a77ddb; animation-delay: 0.2s; }
 .p3 .pname, .p3 .pscore { animation-delay: 1.0s; }
 .p2 .block { height: 165px; background: var(--roxo-claro); animation-delay: 1.2s; }
@@ -429,7 +399,6 @@
 .p1 .pname, .p1 .pscore { animation-delay: 3.2s; }
 .p1 .pname { font-size: 1.45rem; }
 
-/* ---------- animações ---------- */
 @keyframes pop {
     0% { transform: scale(0.6); opacity: 0; }
     70% { transform: scale(1.06); opacity: 1; }

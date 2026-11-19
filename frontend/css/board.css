@@ -34,7 +34,6 @@ body {
     padding: 2px;
 }
 
-/* ---------- abas de mapas ---------- */
 #tabs {
     grid-column: 1 / -1;
     display: flex;
@@ -65,7 +64,6 @@ body {
     margin-left: 4px;
 }
 
-/* ---------- paleta ---------- */
 #palette {
     grid-row: 2 / 4;
     background: var(--panel);
@@ -129,7 +127,6 @@ body {
     height: 64px;
 }
 
-/* ---------- barra de ferramentas ---------- */
 #toolbar {
     display: flex;
     align-items: center;
@@ -176,7 +173,6 @@ body {
     flex: 1;
 }
 
-/* ---------- quadro ---------- */
 #stage {
     position: relative;
     min-height: 0;
@@ -270,7 +266,6 @@ body {
     }
 }
 
-/* ---------- modo aluno ---------- */
 #app.player {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;

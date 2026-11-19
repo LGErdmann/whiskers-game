@@ -9,10 +9,6 @@ import cenario as C
 import sala as S
 
 
-# ============================================================
-# CONFIGURAÇÃO
-# ============================================================
-
 st.set_page_config(
     page_title="Where's Whiskers?",
     page_icon=os.path.join(C.ASSETS_DIR, "characters", "whiskers.png"),
@@ -22,7 +18,7 @@ st.set_page_config(
 
 DEFAULT_APP_URL = "https://whiskers-game.streamlit.app"
 SENHA_PADRAO = "professor"
-ATUALIZAR = 2  # segundos entre as atualizações automáticas das telas
+ATUALIZAR = 2
 
 BOTAO_PONTOS = {
     0: "0",
@@ -53,12 +49,7 @@ VOCABULARIO = """
 """
 
 
-# ============================================================
-# FUNÇÕES AUXILIARES
-# ============================================================
-
 def _largura_total(fn):
-    """`width="stretch"` nas versões novas do Streamlit, `use_container_width` nas antigas."""
     try:
         params = inspect.signature(fn).parameters
     except (TypeError, ValueError):
@@ -82,17 +73,7 @@ def senha_professor():
 
 
 def app_url():
-    url = segredo("APP_URL")
-    if url:
-        return url.rstrip("/")
-    try:
-        host = st.context.headers.get("Host", "")
-    except Exception:
-        host = ""
-    # Rodando local (ou na rede da escola): usa o próprio endereço
-    if host and "streamlit.app" not in host and ":" in host:
-        return f"http://{host}"
-    return DEFAULT_APP_URL
+    return (segredo("APP_URL") or DEFAULT_APP_URL).rstrip("/")
 
 
 def link_sala(codigo):
@@ -109,7 +90,6 @@ def ir_para(**params):
 
 
 def novo_valor(valor):
-    """Valores do componente ficam guardados entre reruns: processa cada envio uma vez só."""
     if not isinstance(valor, dict) or not valor.get("nonce"):
         return None
     vistos = st.session_state.setdefault("nonces", set())
@@ -167,17 +147,9 @@ def nome_da_vez(sala):
     return sala["jogadores"].get(pid, {}).get("nome")
 
 
-# ============================================================
-# ESTILIZAÇÃO
-# ============================================================
-
 with open(os.path.join(C.FRONTEND_DIR, "css", "streamlit.css"), encoding="utf-8") as _f:
     st.markdown(f"<style>{_f.read()}</style>", unsafe_allow_html=True)
 
-
-# ============================================================
-# BLOCOS VISUAIS
-# ============================================================
 
 def hero(subtitulo=""):
     st.markdown(
@@ -197,18 +169,11 @@ def caixa_pin(codigo):
 
 
 def faixa_fase(sala):
-    """Fase atual e progresso dos turnos (ex.: Fase 2 de 3 · 4/10 alunos jogaram)."""
     total_alunos = len(sala["ordem"])
     jogaram = len([p for p in sala["jogaram"] if p in sala["jogadores"]])
-    pontos = "".join(
-        f"<span class='dot{' done' if i < sala['fase'] - (sala['status'] == 'jogando') else ''}"
-        f"{' now' if i == sala['fase'] - 1 and sala['status'] == 'jogando' else ''}'></span>"
-        for i in range(sala["fases_total"])
-    )
     st.markdown(
         f"<div class='fase'><span class='fase-nome'>Fase {sala['fase']} de {sala['fases_total']}</span>"
-        f"<span class='dots'>{pontos}</span>"
-        f"<span class='fase-turnos'>{jogaram}/{total_alunos} jogaram</span></div>",
+        f"<span>{jogaram}/{total_alunos} jogaram</span></div>",
         unsafe_allow_html=True,
     )
 
@@ -277,7 +242,7 @@ def podio(sala, pid=None):
         return
 
     lugares = []
-    for lugar in (2, 1, 3):  # ordem visual do pódio
+    for lugar in (2, 1, 3):
         if lugar <= len(ranking):
             j = sala["jogadores"][ranking[lugar - 1]]
             coroa = ""
@@ -302,7 +267,6 @@ def podio(sala, pid=None):
             unsafe_allow_html=True,
         )
 
-    # Balões uma vez por partida encerrada
     chave = f"baloes_{sala['codigo']}_{sala['rodada_fim']}"
     if not st.session_state.get(chave):
         st.session_state[chave] = True
@@ -315,14 +279,9 @@ def painel_placar(codigo, pid=None):
     if sala is None:
         st.rerun(scope="app")
     if pid is not None and chave_aluno(sala, pid) != st.session_state.get("chave_aluno"):
-        # Mudou algo que troca o tabuleiro do aluno (a vez dele, por exemplo)
         st.rerun(scope="app")
     st.markdown(placar_html(sala, pid), unsafe_allow_html=True)
 
-
-# ============================================================
-# PÁGINA INICIAL
-# ============================================================
 
 def pagina_inicial():
     hero("Coloque o gato no lugar certo e suba no placar!")
@@ -346,19 +305,58 @@ def pagina_inicial():
 
     with professor:
         st.subheader("Sou professor")
-        with st.form("login_professor"):
-            senha = st.text_input("Senha", type="password")
-            if st.form_submit_button("Entrar e criar sala", type="primary", **WIDE_FORM):
-                if hmac.compare_digest(senha.encode(), senha_professor().encode()):
-                    codigo, token = S.criar_sala()
-                    ir_para(sala=codigo, prof=token)
-                else:
-                    st.error("Senha incorreta.")
-        if senha_professor() == SENHA_PADRAO:
-            st.caption(
-                "Atenção: usando a senha padrão. Defina `TEACHER_PASSWORD` nos *secrets* "
-                "do Streamlit Cloud para proteger o acesso de professor."
+        if not st.session_state.get("professor_logado"):
+            login_professor()
+            return
+
+        sala_criada = st.session_state.get("sala_criada")
+        if sala_criada and S.obter(sala_criada[0]):
+            codigo, token = sala_criada
+            qr_com_link(codigo)
+            st.button(
+                "Abrir painel da sala", type="primary", **WIDE,
+                on_click=ir_para_painel, args=(codigo, token),
             )
+        else:
+            st.write("Login feito. Gere uma sala para os alunos entrarem.")
+            if st.button("Gerar sala", type="primary", **WIDE):
+                st.session_state["sala_criada"] = S.criar_sala()
+                st.rerun()
+        if st.button("Sair", **WIDE):
+            st.session_state.pop("professor_logado", None)
+            st.session_state.pop("sala_criada", None)
+            st.rerun()
+
+
+def login_professor():
+    with st.form("login_professor"):
+        senha = st.text_input("Senha", type="password")
+        if st.form_submit_button("Entrar como professor", type="primary", **WIDE_FORM):
+            if hmac.compare_digest(senha.encode(), senha_professor().encode()):
+                st.session_state["professor_logado"] = True
+                st.rerun()
+            else:
+                st.error("Senha incorreta.")
+    if senha_professor() == SENHA_PADRAO:
+        st.caption(
+            "Atenção: usando a senha padrão. Defina `TEACHER_PASSWORD` nos *secrets* "
+            "do Streamlit Cloud para proteger o acesso de professor."
+        )
+
+
+def ir_para_painel(codigo, token):
+    st.query_params.from_dict({"sala": codigo, "prof": token})
+
+
+def qr_com_link(codigo):
+    url = link_sala(codigo)
+    caixa_pin(codigo)
+    _, meio, _ = st.columns([1, 2, 1])
+    meio.image(C.qr_png(url))
+    st.markdown(
+        f"<div class='join-url'><a href='{esc(url)}' target='_blank'>{esc(url)}</a></div>",
+        unsafe_allow_html=True,
+    )
 
 
 def pagina_sala_inexistente():
@@ -367,10 +365,6 @@ def pagina_sala_inexistente():
     if st.button("Voltar ao início"):
         ir_para()
 
-
-# ============================================================
-# ALUNO
-# ============================================================
 
 def pagina_entrada(sala, removido=False):
     hero("Digite seu nome para entrar na partida")
@@ -400,7 +394,6 @@ def vez_ativa(sala, pid):
 
 
 def chave_aluno(sala, pid):
-    """O que, se mudar, exige redesenhar a página inteira do aluno."""
     if sala is None:
         return None
     ativa = vez_ativa(sala, pid)
@@ -421,11 +414,9 @@ def visao_aluno(codigo, pid):
     nome = sala["jogadores"][pid]["nome"]
 
     if sala["status"] == "lobby":
-        total = sala["fases_total"]
         st.markdown(
             f"<div class='lobby-wait'><div class='big'>Você entrou, {esc(nome)}!</div>"
-            f"<div>Veja seu nome na tela do professor.<br>"
-            f"O jogo terá {total} fase{'s' if total != 1 else ''}. Aguardando o professor começar…</div></div>",
+            f"<div>Aguardando o professor começar…</div></div>",
             unsafe_allow_html=True,
         )
         return
@@ -435,27 +426,25 @@ def visao_aluno(codigo, pid):
         return
 
     if sala["status"] == "intervalo":
-        faixa_fase(sala)
-        faixa_resultado(sala, pid)
         pos = S.ranking(sala).index(pid) + 1
         st.markdown(
             f"<div class='lobby-wait'><div class='big'>Fase {sala['fase']} concluída!</div>"
-            f"<div>Você está em <b>{pos}º lugar</b>.<br>"
-            f"O professor está montando o cenário da fase {sala['fase'] + 1}…</div></div>",
+            f"<div>Você está em <b>{pos}º lugar</b>. Aguarde a próxima fase…</div></div>",
             unsafe_allow_html=True,
         )
         return
 
     faixa_fase(sala)
     faixa_prompt(sala)
-    faixa_resultado(sala, pid)
 
     ultimo = sala.get("ultimo") or {}
-    if ultimo.get("pid") == pid and ultimo.get("pontos") == 100:
-        chave = f"festa_{ultimo['vez_id']}"
-        if not st.session_state.get(chave):
-            st.session_state[chave] = True
-            st.balloons()
+    if ultimo.get("pid") == pid:
+        faixa_resultado(sala, pid)
+        if ultimo.get("pontos") == 100:
+            chave = f"festa_{ultimo['vez_id']}"
+            if not st.session_state.get(chave):
+                st.session_state[chave] = True
+                st.balloons()
 
     if not sala["cena"]:
         st.info("O professor está montando a cena…")
@@ -464,13 +453,13 @@ def visao_aluno(codigo, pid):
     da_vez = nome_da_vez(sala)
     resposta = sala["resposta"]
     if resposta and resposta["pid"] == pid:
-        texto = "Resposta enviada! Aguarde o professor avaliar."
+        texto = "Resposta enviada! Aguarde o professor."
     elif resposta:
-        texto = f"{esc(da_vez)} respondeu! O professor está avaliando…"
+        texto = f"{esc(da_vez)} respondeu. Aguardando o professor…"
     elif da_vez:
-        texto = f"Vez de {esc(da_vez)} — {esc(da_vez)} está escondendo o Whiskers…"
+        texto = f"Vez de {esc(da_vez)}"
     else:
-        texto = "Aguardando o professor escolher quem joga…"
+        texto = "Aguardando o professor…"
     st.markdown(f"<div class='turn'>{texto}</div>", unsafe_allow_html=True)
 
     st.image(C.scene_image(sala["cena"], resposta["cat"] if resposta else None))
@@ -494,7 +483,7 @@ def pagina_aluno(codigo, pid):
             vez_id = sala["vez"]["id"]
             faixa_prompt(sala)
             st.markdown(
-                "<div class='turn mine'>Sua vez! Arraste o Whiskers e clique em Enviar resposta</div>",
+                "<div class='turn mine'>Sua vez!</div>",
                 unsafe_allow_html=True,
             )
             valor = novo_valor(C.player_board(sala["cena"], vez_id, key=f"player_{vez_id}"))
@@ -508,46 +497,49 @@ def pagina_aluno(codigo, pid):
         with st.expander("Place prepositions"):
             st.markdown(VOCABULARIO, unsafe_allow_html=True)
 
-    # Guardado depois de tratar a resposta, para o placar comparar com o estado atual
     st.session_state["chave_aluno"] = chave_aluno(S.obter(codigo), pid)
 
     with lateral:
         painel_placar(codigo, pid)
 
 
-# ============================================================
-# PROFESSOR
-# ============================================================
+def mais_opcoes(sala):
+    codigo = sala["codigo"]
+    with st.expander("Mais opções"):
+        if sala["status"] == "jogando":
+            with st.form("form_prompt", border=False):
+                texto = st.text_input("Instrução para a turma", value=sala["prompt"], key=f"prompt_{codigo}")
+                if st.form_submit_button("Mudar instrução"):
+                    S.definir_prompt(codigo, texto)
 
-def lista_alunos(sala, removivel=True):
-    if not sala["ordem"]:
-        return
-    with st.expander(f"Alunos ({len(sala['ordem'])})"):
-        for jid in sala["ordem"]:
-            j = sala["jogadores"][jid]
-            nome_col, botao_col = st.columns([4, 1])
-            nome_col.write(f"{j['nome']} — {j['pontos']} pts")
-            if removivel:
-                botao_col.button(
-                    "Remover", key=f"rm_{jid}",
-                    on_click=S.remover_jogador, args=(sala["codigo"], jid),
+            restantes = S.faltam(sala)
+            if len(restantes) > 1:
+                escolha_col, dar_col = st.columns([3, 1], vertical_alignment="bottom")
+                escolhido = escolha_col.selectbox(
+                    "Escolher quem joga agora", restantes,
+                    format_func=lambda j: sala["jogadores"][j]["nome"],
+                    key="escolha_vez",
                 )
+                dar_col.button("Dar a vez", on_click=S.dar_vez, args=(codigo, escolhido), **WIDE)
+
+        if sala["ordem"]:
+            remover_col, botao_col = st.columns([3, 1], vertical_alignment="bottom")
+            removido = remover_col.selectbox(
+                "Remover aluno da sala", sala["ordem"],
+                format_func=lambda j: sala["jogadores"][j]["nome"],
+                key="escolha_remover",
+            )
+            botao_col.button("Remover", on_click=S.remover_jogador, args=(codigo, removido), **WIDE)
+
+        if sala["status"] in ("jogando", "intervalo"):
+            st.button("Encerrar o jogo e mostrar o pódio", on_click=S.encerrar, args=(codigo,))
 
 
 def professor_lobby(sala):
     codigo = sala["codigo"]
-    qr_col, info_col = st.columns([1, 1.4], gap="large")
-    with qr_col:
-        st.image(C.qr_png(link_sala(codigo)))
-    with info_col:
-        caixa_pin(codigo)
-        st.markdown(
-            f"<div class='join-url'>Entre em <b>{esc(app_url())}</b><br>"
-            "ou aponte a câmera do celular para o QR code</div>",
-            unsafe_allow_html=True,
-        )
-        n = len(sala["ordem"])
-        st.markdown(f"<div class='count'>{n} aluno{'s' if n != 1 else ''}</div>", unsafe_allow_html=True)
+    qr_com_link(codigo)
+    n = len(sala["ordem"])
+    st.markdown(f"<div class='count'>{n} aluno{'s' if n != 1 else ''}</div>", unsafe_allow_html=True)
 
     nomes = "".join(f"<span class='chip'>{esc(sala['jogadores'][j]['nome'])}</span>" for j in sala["ordem"])
     st.markdown(
@@ -556,85 +548,47 @@ def professor_lobby(sala):
     )
     st.write("")
 
-    fases_col, _ = st.columns([1, 2])
+    if not sala["cena"]:
+        st.info("Monte o cenário da fase 1 na aba **Montar cena** e clique em **Publicar para a turma**.")
+
+    fases_col, comecar_col = st.columns([1, 2], vertical_alignment="bottom")
     fases = fases_col.number_input(
-        "Quantas fases?", min_value=1, max_value=S.MAX_FASES,
+        "Fases", min_value=1, max_value=S.MAX_FASES,
         value=sala["fases_total"], step=1, key=f"fases_{codigo}",
-        help="Em cada fase, todos os alunos jogam uma vez. Entre as fases você monta um cenário novo.",
     )
     if fases != sala["fases_total"]:
         S.definir_fases(codigo, fases)
-
-    if not sala["cena"]:
-        st.warning("Antes de começar, monte o cenário da fase 1 na aba **Montar cena** e clique em **Publicar para a turma**.")
-    else:
-        st.image(C.scene_image(sala["cena"]), caption="Cenário da fase 1", width=420)
-    st.button(
+    comecar_col.button(
         "Começar jogo", type="primary", **WIDE,
         disabled=not (sala["cena"] and sala["ordem"]),
         on_click=S.comecar, args=(codigo,),
     )
-    lista_alunos(sala)
+    mais_opcoes(sala)
 
 
 def professor_jogando(sala):
     codigo = sala["codigo"]
-
-    with st.form("form_prompt", border=False):
-        texto_col, botao_col = st.columns([4, 1], vertical_alignment="bottom")
-        texto = texto_col.text_input("Instrução para a turma", value=sala["prompt"], key=f"prompt_{codigo}")
-        if botao_col.form_submit_button("Atualizar", **WIDE_FORM):
-            S.definir_prompt(codigo, texto)
-            sala = S.obter(codigo)
     faixa_fase(sala)
     faixa_prompt(sala)
     faixa_resultado(sala)
 
     if not sala["ordem"]:
-        st.info("Nenhum aluno na sala ainda. Compartilhe o QR code ou o PIN.")
+        st.info("Nenhum aluno na sala. Compartilhe o QR code ou o PIN.")
+        mais_opcoes(sala)
         return
 
     da_vez = nome_da_vez(sala)
     resposta = sala["resposta"]
-    restantes = S.faltam(sala)
 
-    vez_col, prox_col = st.columns([3, 1], vertical_alignment="center")
-    with vez_col:
-        if da_vez:
-            status = "respondeu" if resposta else "está posicionando o gato…"
-            st.markdown(f"<div class='turn'>Vez de <b>{esc(da_vez)}</b> — {status}</div>", unsafe_allow_html=True)
-        else:
-            st.markdown("<div class='turn'>Ninguém na vez.</div>", unsafe_allow_html=True)
-    prox_col.button(
-        "Pular aluno", on_click=S.pular, args=(codigo,), **WIDE, disabled=not da_vez,
-        help="O aluno da vez perde a vez nesta fase e o jogo passa para o próximo.",
-    )
+    vez_col, pular_col = st.columns([3, 1], vertical_alignment="center")
+    if da_vez:
+        status = "respondeu" if resposta else "está jogando…"
+        vez_col.markdown(f"<div class='turn'>Vez de <b>{esc(da_vez)}</b>: {status}</div>", unsafe_allow_html=True)
+    pular_col.button("Pular aluno", on_click=S.pular, args=(codigo,), **WIDE, disabled=not da_vez)
 
-    seguintes = [p for p in restantes if p != (sala["vez"] or {}).get("pid")]
-    if seguintes:
-        fila = " → ".join(esc(sala["jogadores"][p]["nome"]) for p in seguintes[:8])
-        extra = f" (+{len(seguintes) - 8})" if len(seguintes) > 8 else ""
-        st.caption(f"Próximos nesta fase: {fila}{extra}")
-        with st.expander("Escolher quem joga agora"):
-            escolha_col, dar_col = st.columns([3, 1], vertical_alignment="bottom")
-            escolhido = escolha_col.selectbox(
-                "Aluno (só quem ainda não jogou nesta fase)", restantes,
-                format_func=lambda j: sala["jogadores"][j]["nome"],
-                key="escolha_vez",
-            )
-            dar_col.button("Dar a vez", on_click=S.dar_vez, args=(codigo, escolhido), **WIDE)
-    else:
-        st.caption("Último aluno desta fase.")
-
-    if not sala["cena"]:
-        st.warning("Publique uma cena na aba Montar cena.")
-    else:
+    if sala["cena"]:
         st.image(C.scene_image(sala["cena"], resposta["cat"] if resposta else None))
 
-    st.markdown(
-        "<div class='score-label'>O aluno acertou? Quantos pontos ele ganha?</div>",
-        unsafe_allow_html=True,
-    )
     with st.container(key="pontos"):
         for coluna, pts in zip(st.columns(len(S.PONTOS)), S.PONTOS):
             coluna.button(
@@ -642,45 +596,32 @@ def professor_jogando(sala):
                 disabled=resposta is None,
                 on_click=S.pontuar, args=(codigo, pts),
             )
-    if resposta is None and da_vez:
-        st.caption("Os botões liberam quando o aluno enviar a resposta.")
-
-    st.divider()
-    fim_col, _ = st.columns([1, 2])
-    fim_col.button("Encerrar e mostrar pódio", on_click=S.encerrar, args=(codigo,), **WIDE)
-    lista_alunos(sala)
+    mais_opcoes(sala)
 
 
 def professor_intervalo(sala):
     codigo = sala["codigo"]
     proxima = sala["fase"] + 1
-    faixa_fase(sala)
-    faixa_resultado(sala)
+    cenario_novo = sala["cena"] and sala["cena"]["rev"] != sala["cena_rev_fase"]
+
+    if cenario_novo:
+        texto = f"Cenário da fase {proxima} publicado. Pode começar!"
+    else:
+        texto = f"Monte o cenário da fase {proxima} na aba <b>Montar cena</b> e publique."
     st.markdown(
         f"<div class='lobby-wait'><div class='big'>Fase {sala['fase']} concluída!</div>"
-        f"<div>Todos os alunos jogaram. Agora monte o cenário da <b>fase {proxima}</b>.</div></div>",
+        f"<div>{texto}</div></div>",
         unsafe_allow_html=True,
     )
     st.write("")
-
-    cenario_novo = sala["cena"] and sala["cena"]["rev"] != sala["cena_rev_fase"]
     if cenario_novo:
-        st.success(f"Cenário da fase {proxima} publicado. Confira abaixo e comece quando quiser.")
         st.image(C.scene_image(sala["cena"]), width=420)
-    else:
-        st.info(
-            f"1. Abra a aba **Montar cena** e altere o cenário.\n"
-            f"2. Clique em **Publicar para a turma**.\n"
-            f"3. Volte aqui e clique em **Começar fase {proxima}**."
-        )
 
-    comecar_col, fim_col = st.columns([2, 1])
-    comecar_col.button(
+    st.button(
         f"Começar fase {proxima} de {sala['fases_total']}", type="primary", **WIDE,
         disabled=not cenario_novo, on_click=S.comecar, args=(codigo,),
     )
-    fim_col.button("Encerrar agora", on_click=S.encerrar, args=(codigo,), **WIDE)
-    lista_alunos(sala)
+    mais_opcoes(sala)
 
 
 def professor_fim(sala):
@@ -713,13 +654,12 @@ def pagina_professor(codigo, token):
         st.markdown("<h1 class='main-title'>Where's Whiskers?</h1>", unsafe_allow_html=True)
         caixa_pin(codigo)
         st.image(C.qr_png(url))
-        st.caption("Link para os alunos:")
         st.code(url, language=None)
         with st.expander("Seu link de professor"):
             st.caption("Guarde para voltar a esta sala. Não compartilhe!")
             st.code(f"{app_url()}/?sala={codigo}&prof={token}", language=None)
-        st.markdown(VOCABULARIO, unsafe_allow_html=True)
-        st.write("")
+        with st.expander("Place prepositions"):
+            st.markdown(VOCABULARIO, unsafe_allow_html=True)
         if st.button("Sair", **WIDE):
             ir_para()
 
@@ -728,7 +668,6 @@ def pagina_professor(codigo, token):
     with principal:
         aba_jogo, aba_cena = st.tabs(["Jogo", "Montar cena"])
 
-        # A aba da cena vem primeiro no código para a publicação já valer no painel
         with aba_cena:
             valor = novo_valor(C.editor_board())
             if valor and valor.get("action") == "publish":
@@ -736,10 +675,7 @@ def pagina_professor(codigo, token):
                 if cena:
                     S.publicar_cena(codigo, cena)
                     st.toast("Cena publicada para a turma!")
-            st.caption(
-                "Monte a cena (o Whiskers fica de fora: quem posiciona são os alunos) e clique em "
-                "**Publicar para a turma**. Publicar de novo troca a cena de todos."
-            )
+            st.caption("O Whiskers fica de fora: quem posiciona são os alunos.")
 
         with aba_jogo:
             painel_professor(codigo)
@@ -747,10 +683,6 @@ def pagina_professor(codigo, token):
     with lateral:
         painel_placar(codigo)
 
-
-# ============================================================
-# ROTEAMENTO
-# ============================================================
 
 params = st.query_params
 codigo_url = (params.get("sala") or "").strip().upper()

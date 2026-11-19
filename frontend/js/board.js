@@ -1,7 +1,3 @@
-// Tabuleiro do Where's Whiskers? como componente bidirecional do Streamlit.
-//   mode "editor": professor monta a cena (salva no navegador) e publica para a turma
-//   mode "player": aluno da vez só move o Whiskers e envia a resposta
-
 const CAT_KEY = "characters/whiskers";
 const STORAGE_KEY = "wheres-whiskers-v1";
 
@@ -26,10 +22,6 @@ let selectedId = null;
 let scale = 1;
 let sent = false;
 
-// ------------------------------------------------------------
-// Protocolo de componentes do Streamlit (sem dependências)
-// ------------------------------------------------------------
-
 function send(type, data) {
     window.parent.postMessage(Object.assign({ isStreamlitMessage: true, type }, data), "*");
 }
@@ -50,10 +42,6 @@ window.addEventListener("message", e => {
 });
 
 send("streamlit:componentReady", { apiVersion: 1 });
-
-// ------------------------------------------------------------
-// Estado
-// ------------------------------------------------------------
 
 function loadState() {
     try {
@@ -104,17 +92,12 @@ function init(args) {
     } else {
         state = loadState();
         if (!DATA.rooms.some(r => r.id === state.room)) state.room = DATA.rooms[0].id;
-        // O Whiskers não faz parte da cena: quem posiciona são os alunos
         for (const id in state.scenes) {
             state.scenes[id] = state.scenes[id].filter(it => ASSETS[it.key] && it.key !== CAT_KEY);
         }
     }
     renderAll();
 }
-
-// ------------------------------------------------------------
-// Renderização
-// ------------------------------------------------------------
 
 function renderTabs() {
     tabsEl.innerHTML = "";
@@ -260,10 +243,6 @@ function fitBoard() {
 
 new ResizeObserver(fitBoard).observe(stageEl);
 
-// ------------------------------------------------------------
-// Ações
-// ------------------------------------------------------------
-
 function select(id) {
     selectedId = id;
     for (const el of boardEl.querySelectorAll(".item")) {
@@ -289,7 +268,6 @@ function addItem(key, x, y) {
         w: a.width,
         rot: 0,
         flip: false,
-        // Tapetes ficam no chão, atrás do resto
         z: /carpet|rug/i.test(key) ? minZ() - 1 : maxZ() + 1,
     };
     items().push(it);
@@ -364,10 +342,6 @@ for (const btn of document.querySelectorAll(".tool[data-action]")) {
     btn.addEventListener("click", () => runAction(btn.dataset.action));
 }
 
-// ------------------------------------------------------------
-// Arrastar da paleta para o quadro
-// ------------------------------------------------------------
-
 function boardPoint(e) {
     const rect = boardEl.getBoundingClientRect();
     return { x: (e.clientX - rect.left) / scale, y: (e.clientY - rect.top) / scale };
@@ -402,10 +376,6 @@ function startPaletteDrag(e, key) {
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
 }
-
-// ------------------------------------------------------------
-// Mover, redimensionar e girar itens
-// ------------------------------------------------------------
 
 function startItemDrag(e, id) {
     e.preventDefault();
@@ -450,10 +420,6 @@ function startItemDrag(e, id) {
 boardEl.addEventListener("pointerdown", e => {
     if (e.target === boardEl) select(null);
 });
-
-// ------------------------------------------------------------
-// Teclado
-// ------------------------------------------------------------
 
 window.addEventListener("keydown", e => {
     const it = selectedId && findItem(selectedId);

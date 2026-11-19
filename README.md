@@ -1,6 +1,6 @@
 # whiskers_game
 
-Where's Whiskers? — jogo em turma para praticar *place prepositions*.
+Where's Whiskers?: jogo em turma para praticar *place prepositions*.
 
 ```bash
 pip install -r requirements.txt
@@ -21,16 +21,16 @@ O que mudou em relação à versão anterior, com prints de cada tela: [docs/MUD
 - A senha padrão `professor` vale enquanto `TEACHER_PASSWORD` não estiver definida nos
   *secrets* (veja [Configuração](#configuração-streamlit-cloud--settings--secrets)).
   Em produção, troque-a: qualquer pessoa que souber a senha padrão entra como professor.
-- Ao entrar, o professor recebe um **link de professor** (menu lateral → *Seu link de professor*).
-  Guarde-o para voltar à mesma sala sem perder o jogo; não compartilhe com os alunos.
-- O **PIN** (5 caracteres) e o **QR code** aparecem na tela do professor e no menu lateral.
-  O link dos alunos tem o formato `https://whiskers-game.streamlit.app/?sala=PIN`.
-- Rodando localmente, abra pelo endereço de rede (ex.: `http://192.168.x.x:8501`), não por
-  `localhost`, para o QR code funcionar nos celulares da mesma rede Wi-Fi.
+- No painel da sala, o professor tem um **link de professor** (menu lateral,
+  *Seu link de professor*). Guarde-o para voltar à mesma sala; não compartilhe com os alunos.
+- O **QR code** e o link dos alunos sempre apontam para
+  `https://whiskers-game.streamlit.app/?sala=PIN`. Para usar outro endereço, defina `APP_URL`
+  nos *secrets*.
 
 ## Como jogar
 
-1. **Professor** entra com a senha → uma sala é criada com **PIN + QR code + link**.
+1. **Professor** entra com a senha e clica em **Gerar sala**. No lugar do login aparecem o
+   **PIN**, o **QR code** e, embaixo, o **link** da sala. **Abrir painel da sala** leva ao jogo.
 2. **Alunos** já podem entrar: leem o QR code (ou digitam o PIN) e colocam o nome.
    Os nomes aparecem na sala de espera, na tela do professor.
 3. O professor escolhe **quantas fases** o jogo terá e, na aba **Montar cena**,
