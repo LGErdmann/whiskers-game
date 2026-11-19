@@ -65,6 +65,21 @@ def professor_valido(codigo, token):
     return bool(sala and token and secrets.compare_digest(sala["token_prof"], token))
 
 
+def telao_valido(codigo, token):
+    sala = obter(codigo)
+    return bool(sala and token and secrets.compare_digest(sala["token_telao"], token))
+
+
+def gato_visivel(sala):
+    vez = sala["vez"] or {}
+    if sala["resposta"]:
+        return sala["resposta"]["cat"]
+    rascunho = sala.get("rascunho")
+    if rascunho and rascunho["vez_id"] == vez.get("id"):
+        return rascunho["cat"]
+    return None
+
+
 def criar_sala():
     store = _store()
     with store.lock:
@@ -74,6 +89,8 @@ def criar_sala():
         store.salas[codigo] = {
             "codigo": codigo,
             "token_prof": token,
+            "token_telao": secrets.token_urlsafe(12),
+            "rascunho": None,
             "criada": time.time(),
             "status": "lobby",
             "fases_total": FASES_PADRAO,
@@ -110,6 +127,7 @@ def publicar_cena(codigo, cena):
         if sala["status"] == "jogando":
             sala["cena_rev_fase"] = rev
         sala["resposta"] = None
+        sala["rascunho"] = None
         return True
     return _mutar(codigo, fn)
 
@@ -127,6 +145,7 @@ def _dar_vez(sala, pid):
     sala["contador_vez"] += 1
     sala["vez"] = {"pid": pid, "id": sala["contador_vez"]}
     sala["resposta"] = None
+    sala["rascunho"] = None
 
 
 def faltam(sala):
@@ -257,19 +276,24 @@ def jogar_de_novo(codigo):
     return _mutar(codigo, fn)
 
 
+class NomeJaRegistrado(Exception):
+    pass
+
+
+def nome_limpo(nome):
+    return " ".join((nome or "").split())[:MAX_NOME]
+
+
 def entrar(codigo, nome):
-    nome = " ".join((nome or "").split())[:MAX_NOME]
+    nome = nome_limpo(nome)
     if not nome:
         return None
 
     def fn(sala):
-        usados = {j["nome"].lower() for j in sala["jogadores"].values()}
-        final, n = nome, 2
-        while final.lower() in usados:
-            final = f"{nome} {n}"
-            n += 1
+        if any(j["nome"].casefold() == nome.casefold() for j in sala["jogadores"].values()):
+            raise NomeJaRegistrado(nome)
         pid = secrets.token_urlsafe(8)
-        sala["jogadores"][pid] = {"nome": final, "pontos": 0, "historico": []}
+        sala["jogadores"][pid] = {"nome": nome, "pontos": 0, "historico": []}
         sala["ordem"].append(pid)
         if sala["status"] == "jogando" and sala["vez"] is None:
             _proximo(sala)
@@ -285,5 +309,17 @@ def responder(codigo, pid, vez_id, cat):
         if sala["resposta"] is not None:
             return False
         sala["resposta"] = {"pid": pid, "vez_id": vez_id, "cat": cat}
+        return True
+    return _mutar(codigo, fn)
+
+
+def mover(codigo, pid, vez_id, cat):
+    def fn(sala):
+        vez = sala["vez"]
+        if sala["status"] != "jogando" or not vez or vez["pid"] != pid or vez["id"] != vez_id:
+            return False
+        if sala["resposta"] is not None:
+            return False
+        sala["rascunho"] = {"pid": pid, "vez_id": vez_id, "cat": cat}
         return True
     return _mutar(codigo, fn)

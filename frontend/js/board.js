@@ -36,10 +36,51 @@ window.addEventListener("message", e => {
     if (!msg || msg.type !== "streamlit:render") return;
     const args = msg.args || {};
     send("streamlit:setFrameHeight", { height: args.height || 640 });
-    if (args.token === token) return;
+    if (args.token === token) {
+        if (MODE === "viewer") atualizarGatoTelao(args.cat);
+        return;
+    }
     token = args.token;
     init(args);
 });
+
+let ultimoEnvio = 0;
+let envioPendente = null;
+
+function gatoAtual() {
+    const cat = findItem("cat");
+    return cat && { x: r1(cat.x), y: r1(cat.y), w: r1(cat.w), rot: cat.rot, flip: cat.flip, z: cat.z };
+}
+
+function enviarMovimento() {
+    if (MODE !== "player" || sent) return;
+    clearTimeout(envioPendente);
+    const falta = 150 - (Date.now() - ultimoEnvio);
+    if (falta > 0) {
+        envioPendente = setTimeout(enviarMovimento, falta);
+        return;
+    }
+    ultimoEnvio = Date.now();
+    setValue({ action: "move", turn: TURN, cat: gatoAtual() });
+}
+
+function atualizarGatoTelao(cat) {
+    const atual = findItem("cat");
+    if (!cat) {
+        if (atual) {
+            state.scenes[state.room] = items().filter(it => it.id !== "cat");
+            renderBoard();
+        }
+        return;
+    }
+    if (!atual) {
+        items().push({ ...cat, id: "cat", key: CAT_KEY, locked: true });
+        renderBoard();
+        return;
+    }
+    Object.assign(atual, cat);
+    updateItemEl(atual);
+}
 
 send("streamlit:componentReady", { apiVersion: 1 });
 
@@ -89,6 +130,11 @@ function init(args) {
             z: maxZ() + 1,
         });
         selectedId = "cat";
+    } else if (MODE === "viewer") {
+        const scene = args.scene;
+        const list = scene.items.map(it => ({ ...it, locked: true }));
+        if (args.cat) list.push({ ...args.cat, id: "cat", key: CAT_KEY, locked: true });
+        state = { room: scene.room, scenes: { [scene.room]: list } };
     } else {
         state = loadState();
         if (!DATA.rooms.some(r => r.id === state.room)) state.room = DATA.rooms[0].id;
@@ -97,6 +143,7 @@ function init(args) {
         }
     }
     renderAll();
+    if (MODE === "player") enviarMovimento();
 }
 
 function renderTabs() {
@@ -255,6 +302,7 @@ function commit() {
     saveState();
     if (MODE === "editor") renderTabs();
     renderToolbar();
+    enviarMovimento();
 }
 
 function addItem(key, x, y) {
@@ -311,6 +359,7 @@ function submitAnswer() {
     if (sent) return;
     const cat = items().find(it => it.key === CAT_KEY);
     if (!cat) return;
+    clearTimeout(envioPendente);
     sent = true;
     cat.locked = true;
     selectedId = null;
@@ -405,6 +454,7 @@ function startItemDrag(e, id) {
         }
         changed = true;
         updateItemEl(it);
+        enviarMovimento();
     };
 
     const up = () => {
@@ -439,6 +489,7 @@ window.addEventListener("keydown", e => {
         it.y += moves[e.key][1];
         updateItemEl(it);
         saveState();
+        enviarMovimento();
     } else {
         return;
     }

@@ -59,6 +59,7 @@ def _largura_total(fn):
 
 WIDE = _largura_total(st.button)
 WIDE_FORM = _largura_total(st.form_submit_button)
+WIDE_LINK = _largura_total(st.link_button)
 
 
 def segredo(nome):
@@ -195,7 +196,7 @@ def faixa_resultado(sala, pid=None):
     st.markdown(f"<div class='result r{pts}'>{texto}</div>", unsafe_allow_html=True)
 
 
-def placar_html(sala, pid=None):
+def placar_html(sala, pid=None, com_pontos_ganhos=True):
     ranking = S.ranking(sala)
     if not ranking:
         corpo = "<div class='lb-empty'>Ninguém entrou ainda…</div>"
@@ -220,7 +221,7 @@ def placar_html(sala, pid=None):
                 classes.append("down")
                 seta = f"<span class='lb-move down'>▼{-mov}</span>"
             delta = ""
-            if ultimo.get("pid") == jid and ultimo.get("pontos"):
+            if com_pontos_ganhos and ultimo.get("pid") == jid and ultimo.get("pontos"):
                 delta = f"<span class='lb-delta'>+{ultimo['pontos']}</span>"
             posicao = f"{i + 1}º"
             alvo = " (vez)" if jid == vez and sala["status"] == "jogando" else ""
@@ -284,47 +285,22 @@ def painel_placar(codigo, pid=None):
 
 
 def pagina_inicial():
-    hero("Coloque o gato no lugar certo e suba no placar!")
+    hero("Área do professor")
     st.write("")
-    aluno, professor = st.columns(2, gap="large")
-
-    with aluno:
-        st.subheader("Sou aluno")
-        with st.form("entrar_aluno"):
-            codigo = st.text_input("PIN da sala", max_chars=5, placeholder="ABCDE")
-            nome = st.text_input("Seu nome", max_chars=S.MAX_NOME)
-            if st.form_submit_button("Entrar", type="primary", **WIDE_FORM):
-                codigo = codigo.strip().upper()
-                if not S.obter(codigo):
-                    st.error("Sala não encontrada. Confira o PIN.")
-                elif not nome.strip():
-                    st.error("Digite seu nome.")
-                else:
-                    pid = S.entrar(codigo, nome)
-                    ir_para(sala=codigo, aluno=pid)
+    _, professor, _ = st.columns([1, 2, 1])
 
     with professor:
-        st.subheader("Sou professor")
         if not st.session_state.get("professor_logado"):
             login_professor()
             return
 
-        sala_criada = st.session_state.get("sala_criada")
-        if sala_criada and S.obter(sala_criada[0]):
-            codigo, token = sala_criada
-            qr_com_link(codigo)
-            st.button(
-                "Abrir painel da sala", type="primary", **WIDE,
-                on_click=ir_para_painel, args=(codigo, token),
-            )
-        else:
-            st.write("Login feito. Gere uma sala para os alunos entrarem.")
-            if st.button("Gerar sala", type="primary", **WIDE):
-                st.session_state["sala_criada"] = S.criar_sala()
-                st.rerun()
+        st.write("Login feito. Gere a sessão para os alunos entrarem.")
+        if st.button("Gerar sessão", type="primary", **WIDE):
+            codigo, token = S.criar_sala()
+            st.session_state.setdefault("paineis", {})[codigo] = token
+            ir_para(sala=codigo, telao=S.obter(codigo)["token_telao"])
         if st.button("Sair", **WIDE):
             st.session_state.pop("professor_logado", None)
-            st.session_state.pop("sala_criada", None)
             st.rerun()
 
 
@@ -344,10 +320,6 @@ def login_professor():
         )
 
 
-def ir_para_painel(codigo, token):
-    st.query_params.from_dict({"sala": codigo, "prof": token})
-
-
 def qr_com_link(codigo):
     url = link_sala(codigo)
     caixa_pin(codigo)
@@ -357,6 +329,95 @@ def qr_com_link(codigo):
         f"<div class='join-url'><a href='{esc(url)}' target='_blank'>{esc(url)}</a></div>",
         unsafe_allow_html=True,
     )
+
+
+def checar_status_telao(sala):
+    if sala is None or sala["status"] != st.session_state.get("status_telao"):
+        st.rerun(scope="app")
+
+
+@st.fragment(run_every=ATUALIZAR)
+def telao_alunos(codigo):
+    sala = S.obter(codigo)
+    checar_status_telao(sala)
+    n = len(sala["ordem"])
+    nomes = "".join(f"<span class='chip'>{esc(sala['jogadores'][j]['nome'])}</span>" for j in sala["ordem"])
+    st.markdown(
+        f"<div class='count'>{n} aluno{'s' if n != 1 else ''}</div>"
+        f"<div class='chips'>{nomes or '<i>Aguardando alunos…</i>'}</div>",
+        unsafe_allow_html=True,
+    )
+
+
+@st.fragment(run_every=ATUALIZAR)
+def telao_placar(codigo):
+    sala = S.obter(codigo)
+    checar_status_telao(sala)
+    st.markdown(placar_html(sala, com_pontos_ganhos=False), unsafe_allow_html=True)
+
+
+@st.fragment(run_every=0.5)
+def telao_jogo(codigo):
+    sala = S.obter(codigo)
+    checar_status_telao(sala)
+    faixa_fase(sala)
+    faixa_prompt(sala)
+    if not sala["cena"]:
+        st.info("O professor está montando a cena…")
+        return
+    da_vez = nome_da_vez(sala)
+    if sala["resposta"]:
+        texto = f"{esc(da_vez)} respondeu! Aguardando o professor…"
+    elif da_vez:
+        texto = f"Vez de {esc(da_vez)}"
+    else:
+        texto = "Aguardando o professor…"
+    st.markdown(f"<div class='turn'>{texto}</div>", unsafe_allow_html=True)
+    C.viewer_board(sala["cena"], S.gato_visivel(sala), height=480, key="telao")
+
+
+def pagina_telao(codigo):
+    sala = S.obter(codigo)
+    st.session_state["status_telao"] = sala["status"]
+
+    if sala["status"] == "lobby":
+        _, meio, _ = st.columns([1, 2, 1])
+        with meio:
+            qr_com_link(codigo)
+            telao_alunos(codigo)
+            token = st.session_state.get("paineis", {}).get(codigo)
+            if token:
+                st.write("")
+                st.link_button(
+                    "Abrir painel do professor", f"./?sala={codigo}&prof={token}",
+                    type="primary", **WIDE_LINK,
+                )
+                st.caption("Deixe esta tela no projetor e conduza o jogo pelo painel, em outra aba ou aparelho.")
+        return
+
+    url = link_sala(codigo)
+    qr_col, info_col = st.columns([1, 6], vertical_alignment="center")
+    qr_col.image(C.qr_png(url), width=110)
+    info_col.markdown(
+        f"<div class='telao-topo'>PIN <b>{esc(codigo)}</b> · <a href='{esc(url)}' target='_blank'>{esc(url)}</a>"
+        "<br><span>Chegou atrasado? Leia o QR code para entrar.</span></div>",
+        unsafe_allow_html=True,
+    )
+
+    principal, lateral = st.columns([3, 1.1], gap="medium")
+    with lateral:
+        telao_placar(codigo)
+    with principal:
+        if sala["status"] == "jogando":
+            telao_jogo(codigo)
+        elif sala["status"] == "intervalo":
+            st.markdown(
+                f"<div class='lobby-wait'><div class='big'>Fase {sala['fase']} concluída!</div>"
+                f"<div>Aguarde a próxima fase…</div></div>",
+                unsafe_allow_html=True,
+            )
+        else:
+            podio(sala)
 
 
 def pagina_sala_inexistente():
@@ -376,10 +437,15 @@ def pagina_entrada(sala, removido=False):
         with st.form("entrar_nome"):
             nome = st.text_input("Seu nome", max_chars=S.MAX_NOME)
             if st.form_submit_button("Entrar no jogo", type="primary", **WIDE_FORM):
-                if not nome.strip():
+                pid = None
+                if not S.nome_limpo(nome):
                     st.error("Digite seu nome.")
                 else:
-                    pid = S.entrar(sala["codigo"], nome)
+                    try:
+                        pid = S.entrar(sala["codigo"], nome)
+                    except S.NomeJaRegistrado:
+                        st.error("Nome já registrado. Escolha outro nome.")
+                if pid:
                     ir_para(sala=sala["codigo"], aluno=pid)
 
 
@@ -462,7 +528,21 @@ def visao_aluno(codigo, pid):
         texto = "Aguardando o professor…"
     st.markdown(f"<div class='turn'>{texto}</div>", unsafe_allow_html=True)
 
-    st.image(C.scene_image(sala["cena"], resposta["cat"] if resposta else None))
+    st.image(C.scene_image(sala["cena"], S.gato_visivel(sala)))
+
+
+@st.fragment
+def tabuleiro_aluno(codigo, pid, vez_id, cena):
+    valor = novo_valor(C.player_board(cena, vez_id, key=f"player_{vez_id}"))
+    if not valor:
+        return
+    cat = limpar_gato(valor.get("cat"))
+    if not cat:
+        return
+    if valor.get("action") == "move":
+        S.mover(codigo, pid, vez_id, cat)
+    elif valor.get("action") == "answer" and S.responder(codigo, pid, vez_id, cat):
+        st.rerun(scope="app")
 
 
 def pagina_aluno(codigo, pid):
@@ -486,11 +566,7 @@ def pagina_aluno(codigo, pid):
                 "<div class='turn mine'>Sua vez!</div>",
                 unsafe_allow_html=True,
             )
-            valor = novo_valor(C.player_board(sala["cena"], vez_id, key=f"player_{vez_id}"))
-            if valor and valor.get("action") == "answer":
-                cat = limpar_gato(valor.get("cat"))
-                if cat and S.responder(codigo, pid, vez_id, cat):
-                    st.rerun()
+            tabuleiro_aluno(codigo, pid, vez_id, sala["cena"])
         else:
             visao_aluno(codigo, pid)
 
@@ -532,7 +608,7 @@ def mais_opcoes(sala):
             botao_col.button("Remover", on_click=S.remover_jogador, args=(codigo, removido), **WIDE)
 
         if sala["status"] in ("jogando", "intervalo"):
-            st.button("Encerrar o jogo e mostrar o pódio", on_click=S.encerrar, args=(codigo,))
+            st.button("Encerrar jogo", on_click=S.encerrar, args=(codigo,))
 
 
 def professor_lobby(sala):
@@ -587,7 +663,7 @@ def professor_jogando(sala):
     pular_col.button("Pular aluno", on_click=S.pular, args=(codigo,), **WIDE, disabled=not da_vez)
 
     if sala["cena"]:
-        st.image(C.scene_image(sala["cena"], resposta["cat"] if resposta else None))
+        st.image(C.scene_image(sala["cena"], S.gato_visivel(sala)))
 
     with st.container(key="pontos"):
         for coluna, pts in zip(st.columns(len(S.PONTOS)), S.PONTOS):
@@ -618,7 +694,7 @@ def professor_intervalo(sala):
         st.image(C.scene_image(sala["cena"]), width=420)
 
     st.button(
-        f"Começar fase {proxima} de {sala['fases_total']}", type="primary", **WIDE,
+        f"Começar fase {proxima}", type="primary", **WIDE,
         disabled=not cenario_novo, on_click=S.comecar, args=(codigo,),
     )
     mais_opcoes(sala)
@@ -627,7 +703,7 @@ def professor_intervalo(sala):
 def professor_fim(sala):
     podio(sala)
     st.button(
-        "Nova partida (zera os pontos)", type="primary", **WIDE,
+        "Nova partida", type="primary", **WIDE,
         on_click=S.jogar_de_novo, args=(sala["codigo"],),
     )
 
@@ -655,6 +731,9 @@ def pagina_professor(codigo, token):
         caixa_pin(codigo)
         st.image(C.qr_png(url))
         st.code(url, language=None)
+        st.link_button(
+            "Abrir telão", f"./?sala={codigo}&telao={S.obter(codigo)['token_telao']}", **WIDE_LINK,
+        )
         with st.expander("Seu link de professor"):
             st.caption("Guarde para voltar a esta sala. Não compartilhe!")
             st.code(f"{app_url()}/?sala={codigo}&prof={token}", language=None)
@@ -699,6 +778,8 @@ else:
         pagina_sala_inexistente()
     elif token_prof and S.professor_valido(codigo_url, token_prof):
         pagina_professor(codigo_url, token_prof)
+    elif params.get("telao") and S.telao_valido(codigo_url, params.get("telao")):
+        pagina_telao(codigo_url)
     elif aluno_id and aluno_id in sala_atual["jogadores"]:
         pagina_aluno(codigo_url, aluno_id)
     else:

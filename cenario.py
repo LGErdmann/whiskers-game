@@ -1,7 +1,8 @@
-import base64
+import hashlib
 import io
 import json
 import os
+import re
 
 import qrcode
 import streamlit as st
@@ -47,11 +48,26 @@ def _open_cropped(path, max_size):
     return image, width, height
 
 
-def _data_url(image, quality=85):
+GERADO_DIR = os.path.join(FRONTEND_DIR, "gerado")
+
+
+def _arquivo_web(image, nome, quality=85):
     buffer = io.BytesIO()
     image.save(buffer, format="WEBP", quality=quality)
-    encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
-    return f"data:image/webp;base64,{encoded}"
+    conteudo = buffer.getvalue()
+    os.makedirs(GERADO_DIR, exist_ok=True)
+    arquivo = re.sub(r"[^a-zA-Z0-9_-]", "_", nome) + ".webp"
+    caminho = os.path.join(GERADO_DIR, arquivo)
+    try:
+        with open(caminho, "rb") as f:
+            igual = f.read() == conteudo
+    except OSError:
+        igual = False
+    if not igual:
+        with open(caminho, "wb") as f:
+            f.write(conteudo)
+    versao = hashlib.md5(conteudo).hexdigest()[:8]
+    return f"gerado/{arquivo}?v={versao}"
 
 
 def _list_pngs(folder):
@@ -71,7 +87,7 @@ def _load_all(assets_dir):
         assets[key] = {
             "name": pretty(name),
             "kind": kind,
-            "src": _data_url(image),
+            "src": _arquivo_web(image, key),
             "ratio": height / width,
             "width": round(width * DEFAULT_SCALE[kind]),
         }
@@ -99,7 +115,7 @@ def _load_all(assets_dir):
         rooms.append({
             "id": room,
             "label": ROOM_LABELS.get(room, pretty(room)),
-            "background": _data_url(background),
+            "background": _arquivo_web(background, f"{room}/background"),
             "ratio": bg_height / bg_width,
             "palette": palette,
         })
@@ -140,6 +156,17 @@ def player_board(cena, vez_id, height=560, key="player"):
     return _board_component(
         data=data, mode="player", scene=cena, turn=vez_id,
         token=f"player-{vez_id}-{cena['rev']}",
+        height=height, key=key, default=None,
+    )
+
+
+def viewer_board(cena, cat=None, height=600, key="viewer"):
+    data = player_data(cena)
+    if data is None:
+        return None
+    return _board_component(
+        data=data, mode="viewer", scene=cena, cat=cat,
+        token=f"viewer-{cena['rev']}",
         height=height, key=key, default=None,
     )
 

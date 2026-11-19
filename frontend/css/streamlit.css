@@ -108,6 +108,21 @@
     word-break: break-all;
 }
 
+.telao-topo {
+    font-size: 1.15rem;
+    color: var(--roxo);
+}
+
+.telao-topo a {
+    color: var(--roxo);
+    font-weight: 700;
+}
+
+.telao-topo span {
+    font-size: 0.95rem;
+    opacity: 0.8;
+}
+
 .join-url a {
     color: var(--roxo);
     font-weight: 700;

@@ -276,6 +276,21 @@ body {
     display: none;
 }
 
+#app.viewer {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+}
+
+#app.viewer #tabs,
+#app.viewer #palette,
+#app.viewer #toolbar {
+    display: none;
+}
+
+#app.viewer .item[data-id="cat"] {
+    transition: left 0.45s linear, top 0.45s linear, width 0.3s, height 0.3s, transform 0.3s;
+}
+
 .item.locked {
     pointer-events: none;
     cursor: default;

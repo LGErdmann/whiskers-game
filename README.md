@@ -15,8 +15,8 @@ O que mudou em relação à versão anterior, com prints de cada tela: [docs/MUD
 
 | Quem | Onde | Login |
 |---|---|---|
-| **Professor** | Página inicial → *Sou professor* | Senha: `professor` (padrão) |
-| **Aluno** | QR code / link da sala, ou página inicial → *Sou aluno* | Sem senha: **PIN da sala** + **nome** |
+| **Professor** | Tela inicial do app | Senha: `professor` (padrão) |
+| **Aluno** | QR code ou link da sessão | Sem senha: só o **nome** (único na sessão) |
 
 - A senha padrão `professor` vale enquanto `TEACHER_PASSWORD` não estiver definida nos
   *secrets* (veja [Configuração](#configuração-streamlit-cloud--settings--secrets)).
@@ -29,16 +29,20 @@ O que mudou em relação à versão anterior, com prints de cada tela: [docs/MUD
 
 ## Como jogar
 
-1. **Professor** entra com a senha e clica em **Gerar sala**. No lugar do login aparecem o
-   **PIN**, o **QR code** e, embaixo, o **link** da sala. **Abrir painel da sala** leva ao jogo.
-2. **Alunos** já podem entrar: leem o QR code (ou digitam o PIN) e colocam o nome.
-   Os nomes aparecem na sala de espera, na tela do professor.
+1. A tela inicial é só o login do **professor**. Ele entra com a senha e clica em **Gerar sessão**.
+   A tela vira o **telão** (PIN, QR code e link), para o projetor. **Abrir painel do professor**
+   abre o painel de controle em outra aba ou aparelho.
+2. **Alunos** já podem entrar: leem o QR code (ou abrem o link) e colocam o nome.
+   Nome repetido recebe "Nome já registrado"; os nomes valem para a sessão toda.
+   Os nomes aparecem no telão.
 3. O professor escolhe **quantas fases** o jogo terá e, na aba **Montar cena**,
    monta o cenário da fase 1 e clica em **Publicar para a turma**.
 4. **Começar jogo**: em cada fase, cada aluno tem um turno, na ordem de entrada.
    O professor escreve a instrução (ex.: *Put Whiskers under the bed*) e o aluno da vez
-   arrasta o gato e envia a resposta.
-5. O professor dá **0, 25, 50 ou 100 pontos** e a vez passa sozinha para o próximo.
+   arrasta o gato e envia a resposta. No telão, o gato se mexe ao vivo enquanto o aluno arrasta;
+   depois que o jogo começa, o QR code fica pequeno no topo para quem chegar atrasado.
+5. No painel, o professor dá **0, 25, 50 ou 100 pontos** (o telão não mostra a nota) e a vez
+   passa sozinha para o próximo.
    O placar ao lado sobe e desce com setas ▲▼ em tempo real.
 6. Depois do turno do último aluno, a fase termina. O professor monta e publica um
    **cenário novo** e clica em **Começar fase N** (o botão só libera com cenário novo).
