@@ -270,6 +270,46 @@ body {
     }
 }
 
+/* ---------- modo aluno ---------- */
+#app.player {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+}
+
+#app.player #tabs,
+#app.player #palette {
+    display: none;
+}
+
+.item.locked {
+    pointer-events: none;
+    cursor: default;
+}
+
+.tool.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+}
+
+.tool.primary:hover {
+    border-color: var(--accent);
+    filter: brightness(1.07);
+}
+
+.tool.primary:disabled {
+    background: var(--panel);
+    color: var(--muted);
+    border-color: var(--border);
+    filter: none;
+}
+
+.tool.big {
+    padding: 8px 16px;
+    font-size: 15px;
+}
+
 #ghost {
     position: fixed;
     pointer-events: none;

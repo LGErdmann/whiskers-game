@@ -1,1 +1,3 @@
 whiskers_game/
+__pycache__/
+.streamlit/secrets.toml

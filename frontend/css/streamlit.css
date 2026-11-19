@@ -1,17 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&display=swap');
+
+:root {
+    --roxo: #46178f;
+    --roxo-claro: #864cbf;
+    --vermelho: #e21b3c;
+    --azul: #1368ce;
+    --amarelo: #d89e00;
+    --verde: #26890c;
+}
+
 .main-title {
     text-align: center;
-    margin: 0 0 4px 0;
-    font-size: 1.55rem;
+    margin: 0 0 8px 0;
+    font-size: 1.45rem;
     line-height: 1.2;
 }
 
-.subtitle {
-    text-align: center;
-    opacity: 0.7;
-    margin-bottom: 12px;
-    font-size: 0.9rem;
-}
-
+/* ---------- vocabulário ---------- */
 .vocab-card {
     background-color: #fffbe6;
     border: 1px solid #ffe58f;
@@ -19,6 +24,7 @@
     padding: 12px 15px;
     border-radius: 10px;
     font-size: 15px;
+    margin-top: 12px;
 }
 
 .vocab-card h3 {
@@ -30,4 +36,420 @@
     padding-left: 20px;
     line-height: 1.8;
     margin-bottom: 0;
+}
+
+/* ---------- cabeçalhos ---------- */
+.hero {
+    background: linear-gradient(135deg, var(--roxo), var(--roxo-claro));
+    color: #fff;
+    border-radius: 18px;
+    padding: 20px 24px;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.hero h1 {
+    font-family: Montserrat, sans-serif;
+    font-weight: 900;
+    font-size: 2.3rem;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+}
+
+.hero p {
+    margin: 6px 0 0;
+    opacity: 0.9;
+    font-size: 1.05rem;
+}
+
+.topbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    background: var(--roxo);
+    color: #fff;
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.pin-box {
+    background: #fff;
+    color: #333;
+    border-radius: 14px;
+    padding: 10px 16px;
+    text-align: center;
+    box-shadow: 0 3px 12px rgba(70, 23, 143, 0.18);
+    margin-bottom: 10px;
+}
+
+.pin-box .label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #777;
+}
+
+.pin-box .pin {
+    font-family: Montserrat, sans-serif;
+    font-weight: 900;
+    font-size: 2.8rem;
+    letter-spacing: 0.15em;
+    color: var(--roxo);
+    line-height: 1.1;
+}
+
+.join-url {
+    text-align: center;
+    font-size: 1.05rem;
+    margin: 6px 0 12px;
+}
+
+.count {
+    text-align: center;
+    font-family: Montserrat, sans-serif;
+    font-weight: 900;
+    font-size: 1.6rem;
+    color: var(--roxo);
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.chip {
+    background: var(--roxo);
+    color: #fff;
+    border-radius: 999px;
+    padding: 7px 16px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    animation: pop 0.4s ease-out;
+}
+
+.lobby-wait {
+    text-align: center;
+    background: linear-gradient(135deg, var(--roxo), var(--roxo-claro));
+    color: #fff;
+    border-radius: 18px;
+    padding: 48px 20px;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.lobby-wait .big {
+    font-family: Montserrat, sans-serif;
+    font-weight: 900;
+    font-size: 1.9rem;
+    margin-bottom: 10px;
+    animation: pop 0.5s ease-out;
+}
+
+/* ---------- fases ---------- */
+.fase {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    background: #f2ecfb;
+    color: var(--roxo);
+    border-radius: 12px;
+    padding: 8px 14px;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.fase-nome {
+    font-family: Montserrat, sans-serif;
+    font-weight: 900;
+    font-size: 1.1rem;
+}
+
+.dots {
+    display: flex;
+    gap: 6px;
+}
+
+.dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #d9cdee;
+}
+
+.dot.done {
+    background: var(--verde);
+}
+
+.dot.now {
+    background: var(--roxo);
+    box-shadow: 0 0 0 3px rgba(70, 23, 143, 0.25);
+}
+
+/* ---------- jogo ---------- */
+.prompt {
+    background: var(--roxo);
+    color: #fff;
+    font-family: Montserrat, sans-serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    text-align: center;
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+}
+
+.turn {
+    font-family: Montserrat, sans-serif;
+    font-weight: 800;
+    font-size: 1.05rem;
+    text-align: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #f2ecfb;
+    color: var(--roxo);
+    margin-bottom: 10px;
+}
+
+.turn.mine {
+    background: var(--verde);
+    color: #fff;
+    font-size: 1.2rem;
+    animation: pop 0.5s ease-out;
+}
+
+.result {
+    font-family: Montserrat, sans-serif;
+    font-weight: 900;
+    font-size: 1.4rem;
+    text-align: center;
+    color: #fff;
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 10px;
+    animation: pop 0.5s ease-out;
+}
+
+.result.r0 { background: var(--vermelho); }
+.result.r25 { background: var(--amarelo); }
+.result.r50 { background: var(--azul); }
+.result.r100 { background: var(--verde); }
+
+.score-label {
+    font-family: Montserrat, sans-serif;
+    font-weight: 800;
+    text-align: center;
+    margin: 10px 0 6px;
+}
+
+/* Botões coloridos de pontuação */
+.st-key-pontos button {
+    min-height: 64px;
+    border: none !important;
+    color: #fff !important;
+    font-family: Montserrat, sans-serif;
+    font-weight: 900;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+}
+
+.st-key-pontos button p {
+    font-size: 1.35rem !important;
+}
+
+.st-key-pontos button:disabled {
+    opacity: 0.35;
+}
+
+.st-key-pts_0 button { background: var(--vermelho) !important; }
+.st-key-pts_25 button { background: var(--amarelo) !important; }
+.st-key-pts_50 button { background: var(--azul) !important; }
+.st-key-pts_100 button { background: var(--verde) !important; }
+
+/* ---------- placar ---------- */
+.lb {
+    background: var(--roxo);
+    color: #fff;
+    border-radius: 16px;
+    padding: 12px;
+}
+
+.lb-title {
+    font-family: Montserrat, sans-serif;
+    font-weight: 900;
+    font-size: 1.25rem;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.lb-empty {
+    text-align: center;
+    opacity: 0.8;
+    padding: 10px 0;
+}
+
+.lb-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+
+.lb-row.top1 { background: #ffd23f; color: #3a2a00; }
+.lb-row.top2 { background: #e4e4ee; color: #2c2c2c; }
+.lb-row.top3 { background: #f0a46b; color: #3a1d00; }
+
+.lb-row.me {
+    outline: 3px solid #fff;
+    outline-offset: -3px;
+    box-shadow: 0 0 0 2px var(--roxo-claro);
+}
+
+.lb-row.up { animation: rise 0.8s ease-out; }
+.lb-row.down { animation: sink 0.8s ease-out; }
+
+.lb-pos {
+    min-width: 30px;
+    text-align: center;
+    font-size: 1.05rem;
+}
+
+.lb-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lb-score {
+    font-family: Montserrat, sans-serif;
+    font-weight: 900;
+}
+
+.lb-move {
+    font-size: 0.8rem;
+    font-weight: 900;
+}
+
+.lb-move.up { color: #19a33f; }
+.lb-move.down { color: #e21b3c; }
+
+.lb > .lb-row:not(.top1):not(.top2):not(.top3) .lb-move.up { color: #6dffa0; }
+.lb > .lb-row:not(.top1):not(.top2):not(.top3) .lb-move.down { color: #ff8fa3; }
+
+.lb-delta {
+    background: var(--verde);
+    color: #fff;
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-size: 0.78rem;
+    animation: pop 0.5s ease-out;
+}
+
+/* ---------- pódio ---------- */
+.podium-title {
+    text-align: center;
+    font-family: Montserrat, sans-serif;
+    font-weight: 900;
+    font-size: 2rem;
+    color: var(--roxo);
+}
+
+.podium {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 12px;
+    min-height: 360px;
+    margin: 16px 0 14px;
+}
+
+.place {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 31%;
+    max-width: 210px;
+}
+
+.place .pname {
+    font-family: Montserrat, sans-serif;
+    font-weight: 900;
+    font-size: 1.2rem;
+    text-align: center;
+    word-break: break-word;
+    margin-bottom: 4px;
+}
+
+.place .pscore {
+    font-weight: 700;
+    opacity: 0.7;
+    margin-bottom: 6px;
+}
+
+.place .block {
+    width: 100%;
+    border-radius: 14px 14px 0 0;
+    display: flex;
+    justify-content: center;
+    padding-top: 14px;
+    color: #fff;
+    font-family: Montserrat, sans-serif;
+    font-weight: 900;
+    font-size: 2.6rem;
+    transform-origin: bottom;
+    animation: grow 0.9s ease-out both;
+    box-shadow: inset 0 -8px 0 rgba(0, 0, 0, 0.15);
+}
+
+.place .pname,
+.place .pscore {
+    animation: fadein 0.5s ease-out both;
+}
+
+/* Sobe o 3º, depois o 2º e por fim o campeão */
+.p3 .block { height: 110px; background: #a77ddb; animation-delay: 0.2s; }
+.p3 .pname, .p3 .pscore { animation-delay: 1.0s; }
+.p2 .block { height: 165px; background: var(--roxo-claro); animation-delay: 1.2s; }
+.p2 .pname, .p2 .pscore { animation-delay: 2.0s; }
+.p1 .block { height: 230px; background: var(--roxo); animation-delay: 2.4s; }
+.p1 .pname, .p1 .pscore { animation-delay: 3.2s; }
+.p1 .pname { font-size: 1.45rem; }
+
+/* ---------- animações ---------- */
+@keyframes pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    70% { transform: scale(1.06); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+@keyframes rise {
+    from { transform: translateY(26px); background: #26890c; }
+}
+
+@keyframes sink {
+    from { transform: translateY(-26px); }
+}
+
+@keyframes grow {
+    from { transform: scaleY(0); }
+    to { transform: scaleY(1); }
+}
+
+@keyframes fadein {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
 }
